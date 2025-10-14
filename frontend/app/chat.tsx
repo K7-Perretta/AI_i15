@@ -138,6 +138,30 @@ export default function ChatScreen() {
             >
               <Text style={[styles.providerText, preferredProvider === 'emergent_llm' && styles.providerTextActive]}>Emergent LLM</Text>
             </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.providerOption, preferredProvider === 'ibm_watsonx' && styles.providerOptionActive]}
+              onPress={() => setPreferredProvider('ibm_watsonx')}
+            >
+              <Text style={[styles.providerText, preferredProvider === 'ibm_watsonx' && styles.providerTextActive]}>IBM Watsonx</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.providerOption, preferredProvider === 'aimlapi' && styles.providerOptionActive]}
+              onPress={() => setPreferredProvider('aimlapi')}
+            >
+              <Text style={[styles.providerText, preferredProvider === 'aimlapi' && styles.providerTextActive]}>AIMLAPI</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.providerOption, preferredProvider === 'groq' && styles.providerOptionActive]}
+              onPress={() => setPreferredProvider('groq')}
+            >
+              <Text style={[styles.providerText, preferredProvider === 'groq' && styles.providerTextActive]}>Groq</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.providerOption, preferredProvider === 'mistral' && styles.providerOptionActive]}
+              onPress={() => setPreferredProvider('mistral')}
+            >
+              <Text style={[styles.providerText, preferredProvider === 'mistral' && styles.providerTextActive]}>Mistral</Text>
+            </TouchableOpacity>
           </View>
         </View>
       )}

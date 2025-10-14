@@ -28,6 +28,10 @@ export default function SettingsScreen() {
   const [keys, setKeys] = useState<APIKey[]>([
     { name: 'OpenAI', placeholder: 'sk-...', value: '' },
     { name: 'Anthropic', placeholder: 'sk-ant-...', value: '' },
+    { name: 'IBM Watsonx', placeholder: 'your-key...', value: '' },
+    { name: 'AIMLAPI', placeholder: 'your-key...', value: '' },
+    { name: 'Groq', placeholder: 'gsk-...', value: '' },
+    { name: 'Mistral', placeholder: 'your-key...', value: '' },
     { name: 'Perplexity', placeholder: 'pplx-...', value: '' },
     { name: 'Tavily', placeholder: 'tvly-...', value: '' },
     { name: 'ElevenLabs', placeholder: 'sk-...', value: '' },
@@ -53,6 +57,10 @@ export default function SettingsScreen() {
       setKeys([
         { name: 'OpenAI', placeholder: 'sk-...', value: maskedKeys.openai || '' },
         { name: 'Anthropic', placeholder: 'sk-ant-...', value: maskedKeys.anthropic || '' },
+        { name: 'IBM Watsonx', placeholder: 'your-key...', value: maskedKeys.ibm_watsonx || '' },
+        { name: 'AIMLAPI', placeholder: 'your-key...', value: maskedKeys.aimlapi || '' },
+        { name: 'Groq', placeholder: 'gsk-...', value: maskedKeys.groq || '' },
+        { name: 'Mistral', placeholder: 'your-key...', value: maskedKeys.mistral || '' },
         { name: 'Perplexity', placeholder: 'pplx-...', value: maskedKeys.perplexity || '' },
         { name: 'Tavily', placeholder: 'tvly-...', value: maskedKeys.tavily || '' },
         { name: 'ElevenLabs', placeholder: 'sk-...', value: maskedKeys.elevenlabs || '' },
@@ -80,8 +88,12 @@ export default function SettingsScreen() {
       
       keys.forEach(key => {
         if (key.value && !key.value.includes('***')) {
-          const keyName = key.name.toLowerCase().replace('elevenlabs', 'elevenlabs').replace('replicate', 'replicate');
+          const keyName = key.name.toLowerCase().replace('ibm watsonx', 'ibm_watsonx').replace('aimlapi', 'aimlapi').replace('elevenlabs', 'elevenlabs').replace('replicate', 'replicate');
           if (keyName === 'anthropic') keyData.anthropic = key.value;
+          else if (keyName === 'ibm_watsonx') keyData.ibm_watsonx = key.value;
+          else if (keyName === 'aimlapi') keyData.aimlapi = key.value;
+          else if (keyName === 'groq') keyData.groq = key.value;
+          else if (keyName === 'mistral') keyData.mistral = key.value;
           else if (keyName === 'elevenlabs') keyData.elevenlabs = key.value;
           else if (keyName === 'replicate') keyData.replicate = key.value;
           else keyData[keyName] = key.value;
@@ -415,3 +427,4 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
 });
+

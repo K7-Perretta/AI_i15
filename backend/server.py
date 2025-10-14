@@ -41,7 +41,11 @@ API_KEYS = {
     "tavily": os.getenv("TAVILY_API_KEY", ""),
     "elevenlabs": os.getenv("ELEVENLABS_API_KEY", ""),
     "anthropic": os.getenv("ANTHROPIC_API_KEY", ""),
-    "replicate": os.getenv("REPLICATE_API_KEY", "")
+    "replicate": os.getenv("REPLICATE_API_KEY", ""),
+    "ibm_watsonx": os.getenv("IBM_WATSONX_API_KEY", ""),
+    "aimlapi": os.getenv("AIMLAPI_API_KEY", ""),
+    "groq": os.getenv("GROQ_API_KEY", ""),
+    "mistral": os.getenv("MISTRAL_API_KEY", "")
 }
 
 # Models
@@ -88,6 +92,14 @@ def get_ai_client(preferred_provider: str = None, use_fallback: bool = False):
     if preferred_provider == "anthropic" and API_KEYS.get("anthropic"):
         import anthropic
         return anthropic.Anthropic(api_key=API_KEYS["anthropic"]), "anthropic"
+    elif preferred_provider == "ibm_watsonx" and API_KEYS.get("ibm_watsonx"):
+        return OpenAI(api_key=API_KEYS["ibm_watsonx"], base_url="https://us-south.ml.cloud.ibm.com"), "ibm_watsonx"
+    elif preferred_provider == "aimlapi" and API_KEYS.get("aimlapi"):
+        return OpenAI(api_key=API_KEYS["aimlapi"], base_url="https://api.aimlapi.com"), "aimlapi"
+    elif preferred_provider == "groq" and API_KEYS.get("groq"):
+        return OpenAI(api_key=API_KEYS["groq"], base_url="https://api.groq.com/openai/v1"), "groq"
+    elif preferred_provider == "mistral" and API_KEYS.get("mistral"):
+        return OpenAI(api_key=API_KEYS["mistral"], base_url="https://api.mistral.ai/v1"), "mistral"
     elif preferred_provider == "emergent_llm" and API_KEYS.get("emergent_llm"):
         return OpenAI(api_key=API_KEYS["emergent_llm"], base_url="https://llm.emergentagi.com/v1"), "emergent_llm"
     elif use_fallback and API_KEYS.get("emergent_llm"):
@@ -136,6 +148,38 @@ async def chat(request: ChatMessage):
                 messages=messages
             )
             ai_message = response.content[0].text
+        elif provider == "ibm_watsonx":
+            response = client.chat.completions.create(
+                model="meta-llama/llama-3-70b-instruct",
+                messages=messages,
+                temperature=0.7,
+                max_tokens=2000
+            )
+            ai_message = response.choices[0].message.content
+        elif provider == "aimlapi":
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=messages,
+                temperature=0.7,
+                max_tokens=2000
+            )
+            ai_message = response.choices[0].message.content
+        elif provider == "groq":
+            response = client.chat.completions.create(
+                model="llama2-70b-4096",
+                messages=messages,
+                temperature=0.7,
+                max_tokens=2000
+            )
+            ai_message = response.choices[0].message.content
+        elif provider == "mistral":
+            response = client.chat.completions.create(
+                model="mistral-large-latest",
+                messages=messages,
+                temperature=0.7,
+                max_tokens=2000
+            )
+            ai_message = response.choices[0].message.content
         else:  # OpenAI or Emergent LLM
             model = "gpt-4o"
             if request.use_fallback or provider == "emergent_llm":

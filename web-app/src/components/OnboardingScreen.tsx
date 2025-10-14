@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { API_BASE } from '../config';
 import './OnboardingScreen.css';
 
 const OnboardingScreen: React.FC = () => {
@@ -17,13 +18,17 @@ const OnboardingScreen: React.FC = () => {
       const formData = new FormData();
       formData.append('name', name.trim());
 
-      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/name/set`, formData);
+      await axios.post(`${API_BASE}/api/name/set`, formData, { withCredentials: false });
 
       localStorage.setItem('ai_name', name.trim());
       navigate('/');
-    } catch (error) {
-      console.error('Error setting AI name:', error);
-      alert('Failed to set AI name. Please try again.');
+    } catch (error: any) {
+      console.error('Error setting AI name:', error?.response || error);
+      const msg =
+        (error?.response?.data && (error.response.data.detail || JSON.stringify(error.response.data))) ||
+        error?.message ||
+        'Unknown error';
+      alert(`Failed to set AI name: ${msg}`);
     } finally {
       setLoading(false);
     }

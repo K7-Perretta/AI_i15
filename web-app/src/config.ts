@@ -14,3 +14,12 @@ export const API_BASE = (() => {
   // Local dev fallback: same host, FastAPI default port
   return `${protocol}//${hostname}:8001`;
 })();
+
+export const api = (path: string) => {
+  // In CRA dev server, use relative paths so the proxy in package.json can forward to the backend
+  if (process.env.NODE_ENV === 'development') {
+    return path;
+  }
+  // In production, hit the absolute backend URL
+  return `${API_BASE}${path}`;
+};

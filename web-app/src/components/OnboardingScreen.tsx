@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { API_BASE } from '../config';
+import { api } from '../config';
 import './OnboardingScreen.css';
 
 const OnboardingScreen: React.FC = () => {
@@ -18,7 +18,7 @@ const OnboardingScreen: React.FC = () => {
       const formData = new FormData();
       formData.append('name', name.trim());
 
-      await axios.post(`${API_BASE}/api/name/set`, formData, { withCredentials: false });
+      await axios.post(api('/api/name/set'), formData, { withCredentials: false });
 
       localStorage.setItem('ai_name', name.trim());
       navigate('/');

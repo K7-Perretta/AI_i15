@@ -21,10 +21,12 @@ load_dotenv()
 app = FastAPI()
 
 # CORS
+# Important: Using allow_credentials=False to avoid browser CORS rejection with wildcard origin.
+# If you need credentials later, switch to allow_origin_regex or explicit origins.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

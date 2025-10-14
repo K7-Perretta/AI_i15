@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { api } from '../config';
 import './HomeScreen.css';
 
 const HomeScreen: React.FC = () => {
@@ -19,7 +20,7 @@ const HomeScreen: React.FC = () => {
         setHasName(true);
       } else {
         // Check backend
-        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/name`);
+        const response = await fetch(api('/api/name'));
         const data = await response.json();
         if (data.has_name) {
           setAiName(data.name);

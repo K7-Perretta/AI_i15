@@ -14,9 +14,10 @@ const OnboardingScreen: React.FC = () => {
 
     setLoading(true);
     try {
-      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/name`, {
-        name: name.trim()
-      });
+      const formData = new FormData();
+      formData.append('name', name.trim());
+
+      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/name/set`, formData);
 
       localStorage.setItem('ai_name', name.trim());
       navigate('/');

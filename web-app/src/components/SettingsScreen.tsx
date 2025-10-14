@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { api } from '../config';
 import './SettingsScreen.css';
 
 interface APIKey {
@@ -40,7 +41,7 @@ const SettingsScreen: React.FC = () => {
       if (name) setAiName(name);
 
       // Load API keys (masked)
-      const response = await axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/settings/keys`);
+      const response = await axios.get(api('/api/settings/keys'));
       const maskedKeys = response.data.keys;
 
       setKeys([
@@ -73,11 +74,20 @@ const SettingsScreen: React.FC = () => {
   const saveAPIKeys = async () => {
     setSaving(true);
     try {
+      const isMasked = (v: string) => v.includes('***') || v.includes('...');
+
       const keyData: any = {};
 
+      // Only send values that the user actually edited (not masked placeholders)
       keys.forEach(key => {
-        if (key.value && !key.value.includes('***')) {
-          const keyName = key.name.toLowerCase().replace('ibm watsonx', 'ibm_watsonx').replace('aimlapi', 'aimlapi').replace('elevenlabs', 'elevenlabs').replace('replicate', 'replicate');
+        if (key.value && !isMasked(key.value)) {
+          const keyName = key.name
+            .toLowerCase()
+            .replace('ibm watsonx', 'ibm_watsonx')
+            .replace('aimlapi', 'aimlapi')
+            .replace('elevenlabs', 'elevenlabs')
+            .replace('replicate', 'replicate');
+
           if (keyName === 'anthropic') keyData.anthropic = key.value;
           else if (keyName === 'ibm_watsonx') keyData.ibm_watsonx = key.value;
           else if (keyName === 'aimlapi') keyData.aimlapi = key.value;
@@ -85,18 +95,19 @@ const SettingsScreen: React.FC = () => {
           else if (keyName === 'mistral') keyData.mistral = key.value;
           else if (keyName === 'elevenlabs') keyData.elevenlabs = key.value;
           else if (keyName === 'replicate') keyData.replicate = key.value;
+          else if (keyName === 'openai') keyData.openai = key.value;
           else keyData[keyName] = key.value;
         }
       });
 
       const customKeyObj: any = {};
       customKeys.forEach(key => {
-        if (key.value && !key.value.includes('***')) {
+        if (key.value && !isMasked(key.value)) {
           customKeyObj[key.name] = key.value;
         }
       });
 
-      await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/settings/keys`, {
+      await axios.post(api('/api/settings/keys'), {
         ...keyData,
         custom_keys: customKeyObj
       });

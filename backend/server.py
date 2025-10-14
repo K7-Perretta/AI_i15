@@ -73,6 +73,12 @@ class APIKeysUpdate(BaseModel):
     elevenlabs: Optional[str] = None
     anthropic: Optional[str] = None
     replicate: Optional[str] = None
+    # Add missing providers so the backend can persist them from the Settings screen
+    ibm_watsonx: Optional[str] = None
+    aimlapi: Optional[str] = None
+    groq: Optional[str] = None
+    mistral: Optional[str] = None
+    emergent_llm: Optional[str] = None
     custom_keys: Optional[Dict[str, str]] = None
 
 class DocumentAnalysisRequest(BaseModel):
@@ -90,24 +96,38 @@ def get_openai_client(use_fallback: bool = False):
     return OpenAI(api_key=API_KEYS["openai"])
 
 def get_ai_client(preferred_provider: str = None, use_fallback: bool = False):
-    """Get AI client based on preferred provider"""
-    if preferred_provider == "anthropic" and API_KEYS.get("anthropic"):
-        import anthropic
-        return anthropic.Anthropic(api_key=API_KEYS["anthropic"]), "anthropic"
-    elif preferred_provider == "ibm_watsonx" and API_KEYS.get("ibm_watsonx"):
-        return OpenAI(api_key=API_KEYS["ibm_watsonx"], base_url="https://us-south.ml.cloud.ibm.com"), "ibm_watsonx"
-    elif preferred_provider == "aimlapi" and API_KEYS.get("aimlapi"):
-        return OpenAI(api_key=API_KEYS["aimlapi"], base_url="https://api.aimlapi.com"), "aimlapi"
-    elif preferred_provider == "groq" and API_KEYS.get("groq"):
-        return OpenAI(api_key=API_KEYS["groq"], base_url="https://api.groq.com/openai/v1"), "groq"
-    elif preferred_provider == "mistral" and API_KEYS.get("mistral"):
-        return OpenAI(api_key=API_KEYS["mistral"], base_url="https://api.mistral.ai/v1"), "mistral"
-    elif preferred_provider == "emergent_llm" and API_KEYS.get("emergent_llm"):
-        return OpenAI(api_key=API_KEYS["emergent_llm"], base_url="https://llm.emergentagi.com/v1"), "emergent_llm"
-    elif use_fallback and API_KEYS.get("emergent_llm"):
-        return OpenAI(api_key=API_KEYS["emergent_llm"], base_url="https://llm.emergentagi.com/v1"), "emergent_llm"
-    else:
-        return OpenAI(api_key=API_KEYS["openai"]), "openai"
+    """Select an AI client for the requested or first-available provider with a configured key.
+       If no suitable provider has a key, raise a 400 with a helpful message."""
+    # Build selection order: requested -> fallback emergent_llm (if flagged) -> standard order
+    selection = []
+    if preferred_provider:
+        selection.append(preferred_provider)
+    if use_fallback:
+        selection.append("emergent_llm")
+    # Append all supported providers in a sane order (dedup later)
+    selection += ["openai", "anthropic", "ibm_watsonx", "aimlapi", "groq", "mistral", "emergent_llm"]
+
+    seen = set()
+    ordered = [p for p in selection if not (p in seen or seen.add(p))]
+
+    for prov in ordered:
+        if prov == "openai" and API_KEYS.get("openai"):
+            return OpenAI(api_key=API_KEYS["openai"]), "openai"
+        if prov == "anthropic" and API_KEYS.get("anthropic"):
+            import anthropic
+            return anthropic.Anthropic(api_key=API_KEYS["anthropic"]), "anthropic"
+        if prov == "ibm_watsonx" and API_KEYS.get("ibm_watsonx"):
+            return OpenAI(api_key=API_KEYS["ibm_watsonx"], base_url="https://us-south.ml.cloud.ibm.com"), "ibm_watsonx"
+        if prov == "aimlapi" and API_KEYS.get("aimlapi"):
+            return OpenAI(api_key=API_KEYS["aimlapi"], base_url="https://api.aimlapi.com"), "aimlapi"
+        if prov == "groq" and API_KEYS.get("groq"):
+            return OpenAI(api_key=API_KEYS["groq"], base_url="https://api.groq.com/openai/v1"), "groq"
+        if prov == "mistral" and API_KEYS.get("mistral"):
+            return OpenAI(api_key=API_KEYS["mistral"], base_url="https://api.mistral.ai/v1"), "mistral"
+        if prov == "emergent_llm" and API_KEYS.get("emergent_llm"):
+            return OpenAI(api_key=API_KEYS["emergent_llm"], base_url="https://llm.emergentagi.com/v1"), "emergent_llm"
+
+    raise HTTPException(status_code=400, detail="No enabled LLM provider found. Add an API key in Settings.")
 
 def serialize_doc(doc):
     """Convert MongoDB document to JSON serializable format"""
@@ -285,6 +305,8 @@ async def text_to_speech(text: str = Form(...), voice: str = Form("nova")):
 async def generate_image(request: ImageGenerationRequest):
     """Generate images using DALL-E 3"""
     try:
+        if not API_KEYS.get("openai"):
+            raise HTTPException(status_code=400, detail="OpenAI API key is required for image generation.")
         client = get_openai_client()
         
         response = client.images.generate(
@@ -473,6 +495,18 @@ async def update_api_keys(keys: APIKeysUpdate):
             API_KEYS["anthropic"] = keys.anthropic
         if keys.replicate:
             API_KEYS["replicate"] = keys.replicate
+
+        # Newly handled providers
+        if getattr(keys, "ibm_watsonx", None):
+            API_KEYS["ibm_watsonx"] = keys.ibm_watsonx
+        if getattr(keys, "aimlapi", None):
+            API_KEYS["aimlapi"] = keys.aimlapi
+        if getattr(keys, "groq", None):
+            API_KEYS["groq"] = keys.groq
+        if getattr(keys, "mistral", None):
+            API_KEYS["mistral"] = keys.mistral
+        if getattr(keys, "emergent_llm", None):
+            API_KEYS["emergent_llm"] = keys.emergent_llm
 
         # Save to database
         await db.settings.update_one(

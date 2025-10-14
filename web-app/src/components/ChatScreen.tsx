@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { api } from '../config';
 import './ChatScreen.css';
 
 interface Message {
@@ -42,12 +43,16 @@ const ChatScreen: React.FC = () => {
     setLoading(true);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/chat`, {
-        message: inputText,
-        conversation_id: conversationId,
-        use_fallback: useFallback,
-        preferred_provider: preferredProvider
-      });
+      const response = await axios.post(
+        api('/api/chat'),
+        {
+          message: inputText,
+          conversation_id: conversationId,
+          use_fallback: useFallback,
+          preferred_provider: preferredProvider
+        },
+        { withCredentials: false }
+      );
 
       const aiMessage: Message = {
         role: 'assistant',
@@ -64,10 +69,14 @@ const ChatScreen: React.FC = () => {
         });
       }, 100);
     } catch (error: any) {
-      console.error('Error:', error);
+      console.error('Error:', error?.response || error);
+      const detail =
+        (error?.response?.data && (error.response.data.detail || JSON.stringify(error.response.data))) ||
+        error?.message ||
+        'Unknown error';
       const errorMessage: Message = {
         role: 'assistant',
-        content: 'Sorry, I encountered an error. Please try again.'
+        content: `Sorry, I encountered an error. ${detail}`
       };
       setMessages(prev => [...prev, errorMessage]);
     } finally {

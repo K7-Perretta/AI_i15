@@ -1,0 +1,15 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "9a7e6619-6453-444a-b31f-9de2f0edae73"
+      }
+    },
+    "ios": {
+      "bundleIdentifier": "cyborg",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    }
+  }
+}

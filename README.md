@@ -134,7 +134,6 @@ npx expo build:ios
 # Or use EAS Build (recommended)
 npm install -g @expo/eas-cli
 eas build --platform ios
-```
 
 ## 🔧 Configuration
 

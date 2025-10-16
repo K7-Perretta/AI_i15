@@ -390,25 +390,43 @@ async def research(request: ResearchRequest):
                 "include_answer": True,
                 "max_results": 5
             }
-            response = requests.post("https://api.tavy.com/search", json=data, headers=headers)
+            response = requests.post("https://api.tavily.com/search", json=data, headers=headers)
             result = response.json()
-            return {"result": result.get("answer", ""), "sources": result.get("results", []), "source": "tavily"}
+            # Build a usable answer even if Tavily doesn't return 'answer'
+            answer = result.get("answer")
+            if not answer:
+                results = result.get("results", [])
+                if results:
+                    snippets = []
+                    for r in results[:5]:
+                        title = r.get("title") or ""
+                        url = r.get("url") or ""
+                        content = r.get("content") or r.get("snippet") or ""
+                        snippets.append(f"- {title} ({url})\n{content[:280]}")
+                    answer = "No direct answer from Tavily. Top sources:\n" + "\n\n".join(snippets)
+                else:
+                    answer = "No results found."
+            return {"result": answer, "sources": result.get("results", []), "source": "tavily"}
         
         else:
-            # Basic web scraping fallback
-            search_url = f"https://www.google.com/search?q={requests.utils.quote(request.query)}"
+            # Basic web scraping fallback (DuckDuckGo HTML to avoid Google bot detection)
+            search_url = f"https://html.duckduckgo.com/html/?q={requests.utils.quote(request.query)}"
             headers = {"User-Agent": "Mozilla/5.0"}
-            response = requests.get(search_url, headers=headers)
+            response = requests.get(search_url, headers=headers, timeout=15)
             soup = BeautifulSoup(response.text, 'html.parser')
-            
-            # Extract snippets
+
             snippets = []
-            for g in soup.find_all('div', class_='g')[:5]:
-                text = g.get_text()
-                if len(text) > 50:
-                    snippets.append(text[:300])
-            
-            return {"result": "\n\n".join(snippets), "source": "web_scraping"}
+            for res in soup.select('.result')[:5]:
+                title_el = res.select_one('.result__title')
+                snippet_el = res.select_one('.result__snippet')
+                link_el = res.select_one('.result__a')
+                title = title_el.get_text(strip=True) if title_el else ''
+                snippet = snippet_el.get_text(strip=True) if snippet_el else ''
+                url = link_el.get('href') if link_el else ''
+                if snippet or title:
+                    snippets.append(f"- {title} ({url})\n{snippet[:280]}")
+            result_text = "\n\n".join(snippets) if snippets else "No results found."
+            return {"result": result_text, "source": "web_scraping"}
     
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Research error: {str(e)}")

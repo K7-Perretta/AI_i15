@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { api } from '../config';
 import './ToolsScreen.css';
 
 const ToolsScreen: React.FC = () => {
@@ -17,10 +18,13 @@ const ToolsScreen: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/image/generate`, {
-        prompt,
-        size: '1024x1024'
-      });
+      const response = await axios.post(
+        api('/api/image/generate'),
+        {
+          prompt,
+          size: '1024x1024'
+        }
+      );
 
       setResult({ type: 'image', data: response.data.image_base64 });
     } catch (error: any) {
@@ -38,9 +42,10 @@ const ToolsScreen: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/code`, {
-        message: prompt
-      });
+      const response = await axios.post(
+        api('/api/code'),
+        { message: prompt }
+      );
 
       setResult({ type: 'code', data: response.data.code });
     } catch (error: any) {
@@ -58,18 +63,24 @@ const ToolsScreen: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/research`, {
-        query: prompt,
-        source: 'perplexity'
-      });
+      const response = await axios.post(
+        api('/api/research'),
+        {
+          query: prompt,
+          source: 'perplexity'
+        }
+      );
 
       setResult({ type: 'research', data: response.data });
     } catch (error: any) {
       try {
-        const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/research`, {
-          query: prompt,
-          source: 'web'
-        });
+        const response = await axios.post(
+          api('/api/research'),
+          {
+            query: prompt,
+            source: 'web'
+          }
+        );
         setResult({ type: 'research', data: response.data });
       } catch (fallbackError) {
         alert('All research methods failed.');
@@ -86,9 +97,10 @@ const ToolsScreen: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/real-estate/analyze`, {
-        message: prompt
-      });
+      const response = await axios.post(
+        api('/api/real-estate/analyze'),
+        { message: prompt }
+      );
 
       setResult({ type: 'real-estate', data: response.data.analysis });
     } catch (error: any) {
@@ -106,9 +118,10 @@ const ToolsScreen: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/business/strategy`, {
-        message: prompt
-      });
+      const response = await axios.post(
+        api('/api/business/strategy'),
+        { message: prompt }
+      );
 
       setResult({ type: 'business', data: response.data.strategy });
     } catch (error: any) {
@@ -126,9 +139,10 @@ const ToolsScreen: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/personal/development`, {
-        message: prompt
-      });
+      const response = await axios.post(
+        api('/api/personal/development'),
+        { message: prompt }
+      );
 
       setResult({ type: 'personal', data: response.data.guidance });
     } catch (error: any) {
@@ -146,9 +160,10 @@ const ToolsScreen: React.FC = () => {
     setResult(null);
 
     try {
-      const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/task/automation`, {
-        message: prompt
-      });
+      const response = await axios.post(
+        api('/api/task/automation'),
+        { message: prompt }
+      );
 
       setResult({ type: 'automation', data: response.data.automation_plan });
     } catch (error: any) {
@@ -174,7 +189,10 @@ const ToolsScreen: React.FC = () => {
       formData.append('prompt', prompt || 'Analyze this document and provide a detailed summary.');
 
       try {
-        const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/api/document/analyze`, formData);
+        const response = await axios.post(
+          api('/api/document/analyze'),
+          formData
+        );
 
         setResult({ type: 'document', data: response.data.analysis });
       } catch (error) {
@@ -240,7 +258,9 @@ const ToolsScreen: React.FC = () => {
         return (
           <div className="result-container">
             <div className="text-result">
-              {typeof result.data === 'string' ? result.data : result.data.result || result.data}
+              {typeof result.data === 'string'
+                ? result.data
+                : (result.data.result || JSON.stringify(result.data, null, 2))}
             </div>
           </div>
         );

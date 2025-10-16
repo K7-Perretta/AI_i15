@@ -1,6 +1,7 @@
+/* Luxury branding application using global palette from :root (see index.css) */
 .container {
   flex: 1;
-  background-color: #f5f7fa;
+  background-color: var(--pearl);
   justify-content: center;
   align-items: center;
   padding: 24px;
@@ -11,13 +12,13 @@
 
 .scroll-container {
   flex: 1;
-  background-color: #f5f7fa;
+  background-color: var(--pearl);
   min-height: 100vh;
 }
 
 .scroll-content {
   padding: 24px;
-  max-width: 600px;
+  max-width: 720px;
   margin: 0 auto;
 }
 
@@ -33,66 +34,53 @@
   margin-bottom: 16px;
 }
 
-.title {
+.title, .welcome-text {
   font-size: 32px;
-  font-weight: bold;
-  color: #1a1a2e;
-  margin: 0;
-  margin-bottom: 16px;
+  font-weight: 700;
+  color: var(--midnight);
+  margin: 0 0 16px 0;
+  letter-spacing: .3px;
 }
 
-.subtitle {
+.subtitle, .tagline, .loading-text {
   font-size: 16px;
-  color: #6b7280;
-  margin: 0;
-}
-
-.welcome-text {
-  font-size: 28px;
-  font-weight: bold;
-  color: #1a1a2e;
-  margin: 0;
-  margin-bottom: 12px;
-}
-
-.tagline {
-  font-size: 16px;
-  color: #6b7280;
+  color: var(--muted);
   margin: 0;
 }
 
 .loading-text {
-  font-size: 18px;
-  color: #6b7280;
+  font-weight: 600;
 }
 
+/* Gold primary CTA matching brand */
 .primary-button {
-  background-color: #6c63ff;
+  background: linear-gradient(180deg, #f2d879, var(--gold));
   padding: 16px 32px;
   border-radius: 12px;
   border: none;
-  color: #fff;
+  color: var(--black);
   font-size: 18px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   margin-top: 24px;
-  transition: background-color 0.2s;
+  transition: transform .12s ease, box-shadow .12s ease, background-color .2s ease;
+  box-shadow: 0 8px 18px rgba(212,175,55,.35);
 }
+.primary-button:hover { transform: translateY(-1px); }
+.primary-button:active { transform: translateY(1px); }
 
-.primary-button:hover {
-  background-color: #5a52e8;
-}
-
+/* Feature grid */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 18px;
   justify-content: center;
 }
 
+/* Card base */
 .card {
   aspect-ratio: 1;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 20px;
   justify-content: center;
   align-items: center;
@@ -103,75 +91,66 @@
   display: flex;
   flex-direction: column;
 }
-
 .card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.card-primary {
-  background-color: #6c63ff;
-}
-
-.card-secondary {
-  background-color: #ff6b9d;
-}
-
-.card-tertiary {
-  background-color: #4ecdc4;
-}
-
-.card-quaternary {
-  background-color: #ffa500;
-}
-
-.card-quinary {
-  background-color: #9b59b6;
-}
-
-.card-senary {
-  background-color: #34495e;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.12);
 }
 
 .card-icon {
-  font-size: 32px;
+  font-size: 36px;
   margin-bottom: 12px;
 }
 
+/* Title/description defaults assume dark background */
 .card-title {
   color: #fff;
   font-size: 18px;
-  font-weight: 600;
-  margin: 0;
-  margin-bottom: 4px;
+  font-weight: 700;
+  margin: 0 0 4px 0;
+  letter-spacing: .2px;
 }
-
 .card-description {
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.85);
   font-size: 12px;
   margin: 0;
   line-height: 1.4;
 }
 
+/* Brand color mapping across the feature cards (rotating palette) */
+.card-primary {   /* Scarlet Red */
+  background-color: var(--scarlet);
+}
+.card-secondary { /* Sacramento Green */
+  background-color: var(--sacramento);
+}
+.card-tertiary {  /* Metallic Gold (use dark text for contrast) */
+  background-color: var(--gold);
+}
+.card-quaternary { /* Midnight Blue */
+  background-color: var(--midnight);
+}
+.card-quinary {   /* Black */
+  background-color: var(--black);
+}
+.card-senary {    /* Gradient accent between Midnight and Scarlet */
+  background-image: linear-gradient(135deg, var(--midnight), var(--scarlet));
+}
+
+/* Override text colors for gold card for proper contrast */
+.card-tertiary .card-title { color: var(--black); }
+.card-tertiary .card-description { color: rgba(0,0,0,.8); }
+
+/* Media tweaks */
 @media (max-width: 480px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
     gap: 12px;
   }
-
   .card {
     padding: 16px;
+    border-radius: 16px;
   }
-
-  .card-icon {
-    font-size: 28px;
-  }
-
-  .card-title {
-    font-size: 16px;
-  }
-
-  .card-description {
-    font-size: 11px;
-  }
+  .card-icon { font-size: 30px; }
+  .card-title { font-size: 16px; }
+  .card-description { font-size: 11px; }
 }

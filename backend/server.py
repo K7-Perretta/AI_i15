@@ -381,3 +381,113 @@ async def research(request: ResearchRequest):
         user_api_keys = await get_user_api_keys(user_id)
         client, provider = get_ai_client(request.preferred_provider, request.use_fallback, user_api_keys
 (Content truncated due to size limit. Use page ranges or line ranges to read remaining content)
+# ===== AI Name endpoints (public) =====
+
+class ChooseNameRequest(BaseModel):
+    branding: Optional[str] = None
+
+
+@app.get("/api/name")
+async def get_ai_name():
+    """
+    Returns whether an AI name has been chosen and the current name if present.
+    Stored globally in the "meta" collection under key "ai_name".
+    """
+    meta = await db.meta.find_one({"key": "ai_name"})
+    if meta and meta.get("value"):
+        return {"has_name": True, "name": meta["value"]}
+    return {"has_name": False, "name": None}
+
+
+@app.post("/api/name/set")
+async def set_ai_name(name: str = Form(...)):
+    """
+    Explicitly set the AI's name (manual override).
+    """
+    val = (name or "").strip()
+    if not val:
+        raise HTTPException(status_code=400, detail="Name cannot be empty")
+    await db.meta.update_one(
+        {"key": "ai_name"},
+        {"$set": {"value": val, "updated_at": datetime.now()}},
+        upsert=True,
+    )
+    return {"ok": True, "name": val}
+
+
+@app.post("/api/name/choose")
+async def choose_ai_name(req: ChooseNameRequest):
+    """
+    Ask the LLM to choose a single refined feminine name for the AI persona,
+    aligned with the provided branding. Falls back to a deterministic list if no LLM key.
+    Persists the chosen name globally.
+    """
+    branding = (req.branding or "").strip()
+    default_branding = (
+        "Brand identity: Italian heritage; American raised; luxury; sophistication; "
+        "class; resilience like a diamond; strength; fight; high-end. Palette: "
+        "Scarlet Red #CE2B37, Sacramento Green #043927, Metallic Gold #D4AF37, "
+        "Midnight Blue #191970, Pearl White #FFFDFA, Black #000000."
+    )
+    persona = branding or default_branding
+
+    # If no LLM available, fallback to a curated list
+    if not (API_KEYS.get("openai") or API_KEYS.get("emergent_llm")):
+        fallback_names = [
+            "Valentina", "Isabella", "Francesca", "Giuliana", "Serafina",
+            "Alessia", "Bianca", "Carina", "Eleonora", "Luciana"
+        ]
+        name = fallback_names[datetime.now().second % len(fallback_names)]
+        await db.meta.update_one(
+            {"key": "ai_name"},
+            {"$set": {"value": name, "updated_at": datetime.now()}},
+            upsert=True,
+        )
+        return {"ok": True, "name": name, "source": "fallback"}
+
+    try:
+        client = get_openai_client(use_fallback=False)
+        system_prompt = (
+            "You are a luxury brand identity expert. Choose a SINGLE refined, "
+            "elegant, feminine first name for an AI assistant reflecting the brand. "
+            "Requirements:\n"
+            "- Distinctive, memorable, high-end\n"
+            "- Hints of Italian heritage with American sophistication\n"
+            "- Evokes resilience (diamond), strength, class, luxury\n"
+            "- Avoid obvious words like 'Diamond', 'AI', 'Lux', 'Bot'\n"
+            "- Output ONLY the name with no quotes or punctuation."
+        )
+        user_msg = f"Branding context:\n{persona}\nProvide only the name."
+        response = client.chat.completions.create(
+            model=model_for_provider("openai", use_fallback=False),
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_msg},
+            ],
+            temperature=0.8,
+            max_tokens=16,
+        )
+        raw = (response.choices[0].message.content or "").strip()
+        # Clean to a simple first-name style (letters/spaces/hyphen/apostrophe)
+        cleaned = "".join(ch for ch in raw if ch.isalpha() or ch in " -'").strip()
+        # Ensure we only keep the first tokenized line/word if multiple slipped in
+        name = cleaned.splitlines()[0].strip()
+        if not name:
+            name = "Valentina"
+
+        await db.meta.update_one(
+            {"key": "ai_name"},
+            {"$set": {"value": name, "updated_at": datetime.now()}},
+            upsert=True,
+        )
+        return {"ok": True, "name": name, "source": "llm"}
+    except Exception as e:
+        print(f"choose_ai_name error: {e}")
+        # Fallback on error
+        name = "Valentina"
+        await db.meta.update_one(
+            {"key": "ai_name"},
+            {"$set": {"value": name, "updated_at": datetime.now()}},
+            upsert=True,
+        )
+        return {"ok": True, "name": name, "source": "error-fallback"}

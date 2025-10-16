@@ -7,7 +7,16 @@
     "start": "react-native start",
     "android": "react-native run-android",
     "ios": "react-native run-ios",
-    "test": "jest"
+    "test": "jest",
+
+    "api:dev": "uvicorn backend.server:app --host 0.0.0.0 --port 8001 --reload",
+    "api:start": "uvicorn backend.server:app --host 0.0.0.0 --port 8001",
+
+    "web:build": "npm --prefix web-app ci && npm --prefix web-app run build",
+    "web:start:prod": "npx --yes serve -s web-app/build -l 3000",
+
+    "pwa:build": "npm run web:build",
+    "pwa:serve": "npm run web:start:prod"
   },
   "dependencies": {
     "react": "18.2.0",

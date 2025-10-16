@@ -297,7 +297,7 @@ async def text_to_speech(text: str = Form(...), voice: str = Form("nova"), use_f
         raise HTTPException(status_code=500, detail=f"TTS error: {str(e)}")
 
 @app.post("/api/image/generate")
-async def generate_image(request: ImageGenerationRequest):
+async def generate_image(request: ImageGenerationRequest, user_id: str = Depends(get_current_user)):
     """Generate images using DALL-E 3"""
     try:
         user_api_keys = await get_user_api_keys(user_id)
@@ -320,7 +320,7 @@ async def generate_image(request: ImageGenerationRequest):
         raise HTTPException(status_code=500, detail=f"Image generation error: {str(e)}")
 
 @app.post("/api/document/analyze")
-async def analyze_document(request: DocumentAnalysisRequest):
+async def analyze_document(request: DocumentAnalysisRequest, user_id: str = Depends(get_current_user)):
     """Analyze documents/images using GPT-4o Vision"""
     try:
         user_api_keys = await get_user_api_keys(user_id)
@@ -371,16 +371,33 @@ async def research(request: ResearchRequest):
             }
             response = requests.post("https://api.perplexity.ai/chat/completions", headers=headers, json=payload)
             response.raise_for_status()
-            return {"result": response.json()["choices"][0]["message"]["content"]}
+            return {"result": response.json()["choices"][0]["message"]["content"], "source": "perplexity"}
         
         elif request.source == "tavily" and API_KEYS["tavily"]:
-            # Tavily API call logic here
-            pass
+            # Tavily API call logic placeholder
+            raise HTTPException(status_code=501, detail="Tavily integration not implemented yet")
 
-        # Fallback to basic web scraping
-        user_api_keys = await get_user_api_keys(user_id)
-        client, provider = get_ai_client(request.preferred_provider, request.use_fallback, user_api_keys
-(Content truncated due to size limit. Use page ranges or line ranges to read remaining content)
+        # Fallback: basic web scraping if the query is a URL
+        url = request.query.strip()
+        if not (url.startswith("http://") or url.startswith("https://")):
+            return {
+                "result": "Provide a URL to scrape in 'query' or use source=perplexity/tavily.",
+                "source": "fallback"
+            }
+
+        resp = requests.get(url, timeout=15, headers={"User-Agent": "Mozilla/5.0"})
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        title = soup.title.string.strip() if soup.title and soup.title.string else ""
+        paragraphs = [p.get_text(" ", strip=True) for p in soup.find_all("p")]
+        text = " ".join(paragraphs)
+        summary = text[:2000]
+
+        return {"result": {"title": title, "summary": summary, "url": url}, "source": "scrape"}
+    except Exception as e:
+        print(f"Research error: {e}")
+        raise HTTPException(status_code=500, detail=f"Research error: {str(e)}")
 # ===== AI Name endpoints (public) =====
 
 class ChooseNameRequest(BaseModel):

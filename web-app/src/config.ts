@@ -1,6 +1,9 @@
 export const API_BASE = (() => {
-  const env = process.env.REACT_APP_BACKEND_URL;
-  if (env && env.trim()) return env.trim();
+  // Normalize env base URL if provided; strip trailing slashes
+  const raw = process.env.REACT_APP_BACKEND_URL;
+  const env = raw && raw.trim() ? raw.trim().replace(/\/+$/, '') : '';
+
+  if (env) return env;
 
   const { protocol, hostname } = window.location;
 
